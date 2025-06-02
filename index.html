@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<!-- saved from url=(0065)file:///C:/Users/Qualtech-Ashish/Desktop/fun%20Ashish/BBBBBB.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Dragon Warrior</title>
+<style>
+  body {
+    margin: 0; 
+    background: #000;
+    overflow: hidden;
+    font-family: monospace;
+    color: white;
+  }
+  canvas {
+    background: #111;
+    display: block;
+    margin: auto;
+    border: 2px solid #555;
+  }
+  #info {
+    text-align: center;
+    margin-top: 5px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="info">Use arrow keys to move. Press A to shoot. Press W to climb walls (levels 4+).</div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const castleColors = ['#8B7D7B', '#6B8E23', '#8B4513', '#2F4F4F', '#483D8B'];
+const maxLevel = 5;
+let currentLevel = 1;
+let gameOver = false;
+
+const keys = {};
+document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+// --- SPRITES (simple pixel art) ---
+
+const colors = {
+  'R': '#0033cc', // hero blue shirt
+  'W': '#fffacd', // skin tone
+  'G': '#228B22', // dragon green
+  '.': null
+};
+
+const heroFrames = [
+  [
+    '.....RRR.....',
+    '.....RRR.....',
+    '....RWRWR....',
+    '....RRRRR....',
+    '...RWWWWWR...',
+    '..RRR..RRR...',
+    '.RWW....WWR..',
+    'RRR......RRR.',
+  ],
+  [
+    '.....RRR.....',
+    '.....RRR.....',
+    '....RWRWR....',
+    '....RRRRR....',
+    '...RWWWWWR...',
+    '..RRR..RRR...',
+    '.RWW....WWR..',
+    'RRRR.....WRR.',
+  ]
+];
+
+const dragonFrames = [
+  [
+    '...GGGGG....',
+    '..GGGGGGG...',
+    '..GGG.WGGG..',
+    '.GGGGGGGGG..',
+    '.GGGWWWGGG..',
+    '..GGGGGGG...',
+    '...GG.GG....',
+    '....GG......'
+  ],
+  [
+    '...GGGGG....',
+    '..GGGGGGG...',
+    '..GGG.WGGG..',
+    '.GGGGGGGGG..',
+    '.GGWWWGGGG..',
+    '..GGGGGGG...',
+    '...G.GG.....',
+    '....GG......'
+  ]
+];
+
+function drawSprite(x, y, scale, frame, spriteData) {
+  const size = 4;
+  for(let row=0; row < spriteData.length; row++) {
+    for(let col=0; col < spriteData[row].length; col++) {
+      const c = spriteData[row][col];
+      if(colors[c]) {
+        ctx.fillStyle = colors[c];
+        ctx.fillRect(x + col * size * scale, y + row * size * scale, size * scale, size * scale);
+      }
+    }
+  }
+}
+
+// Entities
+const hero = {
+  x: 100, y: 500, width: 48, height: 32,
+  health: 100, maxHealth: 100,
+  frameIndex: 0, frameTimer: 0,
+  scale: 1.5,
+  speed: 5,
+  bulletCooldown: 0
+};
+
+const dragon = {
+  x: 600, y: 400, width: 52, height: 32,
+  health: 200, maxHealth: 200,
+  scale: 2.5,
+  frameIndex: 0,
+  frameTimer: 0,
+  wingOffsetY: 0,
+  wingDirection: 1,
+  bulletCooldown: 0
+};
+
+const walls = [
+  { x: 300, y: 400, width: 40, height: 120 },
+  { x: 500, y: 300, width: 40, height: 180 }
+];
+
+let lifelinePlants = [];
+let heroBullets = [];
+let dragonFireballs = [];
+
+function drawHealthBar(x, y, health, maxHealth, color) {
+  ctx.fillStyle = '#555';
+  ctx.fillRect(x, y, 60, 8);
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, 60 * (health / maxHealth), 8);
+  ctx.strokeStyle = 'black';
+  ctx.strokeRect(x, y, 60, 8);
+}
+
+function drawBackground() {
+  ctx.fillStyle = castleColors[currentLevel - 1];
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw castle (simple block on right side)
+  ctx.fillStyle = '#444';
+  ctx.fillRect(canvas.width - 250, canvas.height - 300, 200, 300);
+}
+
+function drawWalls() {
+  if(currentLevel >= 4) {
+    ctx.fillStyle = 'brown';
+    walls.forEach(wall => ctx.fillRect(wall.x, wall.y, wall.width, wall.height));
+  }
+}
+
+function spawnLifeline() {
+  if(Math.random() < 0.01 && lifelinePlants.length < 3) {
+    const x = Math.random() * (canvas.width - 20);
+    lifelinePlants.push({ x, y: 0, width: 20, height: 20, speed: 2 });
+  }
+}
+
+function updateLifelines() {
+  lifelinePlants.forEach(p => p.y += p.speed);
+  lifelinePlants = lifelinePlants.filter(p => {
+    // collision with hero
+    if(p.x < hero.x + hero.width &&
+       p.x + p.width > hero.x &&
+       p.y < hero.y + hero.height &&
+       p.y + p.height > hero.y) {
+      hero.health = Math.min(hero.maxHealth, hero.health + 20);
+      return false; // remove
+    }
+    return p.y < canvas.height;
+  });
+}
+
+function drawLifelines() {
+  ctx.fillStyle = 'limegreen';
+  lifelinePlants.forEach(p => {
+    ctx.beginPath();
+    ctx.ellipse(p.x + p.width/2, p.y + p.height/2, p.width/2, p.height/2, 0, 0, 2 * Math.PI);
+    ctx.fill();
+  });
+}
+
+function checkWallClimb() {
+  if(currentLevel >= 4) {
+    walls.forEach(wall => {
+      if(hero.x + hero.width > wall.x &&
+         hero.x < wall.x + wall.width &&
+         hero.y + hero.height >= wall.y &&
+         keys['w']) {
+           hero.y -= 5;
+         }
+    });
+  }
+}
+
+function updateHero() {
+  if(keys['arrowleft']) hero.x -= hero.speed;
+  if(keys['arrowright']) hero.x += hero.speed;
+  if(keys['arrowup']) hero.y -= hero.speed;
+  if(keys['arrowdown']) hero.y += hero.speed;
+
+  // Clamp position
+  hero.x = Math.max(0, Math.min(canvas.width - hero.width, hero.x));
+  hero.y = Math.max(0, Math.min(canvas.height - hero.height, hero.y));
+
+  // Shoot bullets on A press with cooldown
+  if(keys['a'] && hero.bulletCooldown <= 0) {
+    shootHeroBullet();
+    hero.bulletCooldown = 20;
+  }
+  if(hero.bulletCooldown > 0) hero.bulletCooldown--;
+
+  // Animate hero frames
+  hero.frameTimer++;
+  if(hero.frameTimer > 15) {
+    hero.frameIndex = (hero.frameIndex + 1) % heroFrames.length;
+    hero.frameTimer = 0;
+  }
+}
+
+function shootHeroBullet() {
+  heroBullets.push({
+    x: hero.x + hero.width,
+    y: hero.y + hero.height / 2,
+    width: 8,
+    height: 4,
+    speed: 10
+  });
+}
+
+function updateHeroBullets() {
+  heroBullets.forEach(b => b.x += b.speed);
+  // Remove offscreen bullets
+  heroBullets = heroBullets.filter(b => b.x < canvas.width);
+
+  // Check collision with dragon
+  heroBullets = heroBullets.filter(b => {
+    if(b.x + b.width > dragon.x && b.x < dragon.x + dragon.width &&
+       b.y + b.height > dragon.y && b.y < dragon.y + dragon.height) {
+      dragon.health -= 10;
+      return false;
+    }
+    return true;
+  });
+}
+
+function updateDragon() {
+  // wing flap offset
+  dragon.wingOffsetY += dragon.wingDirection * 0.3;
+  if(dragon.wingOffsetY > 3 || dragon.wingOffsetY < -3) dragon.wingDirection *= -1;
+
+  dragon.frameTimer++;
+  if(dragon.frameTimer > 20) {
+    dragon.frameIndex = (dragon.frameIndex + 1) % dragonFrames.length;
+    dragon.frameTimer = 0;
+  }
+
+  // Dragon shoots fireballs if cooldown done
+  if(dragon.bulletCooldown <= 0) {
+    shootDragonFireball();
+    dragon.bulletCooldown = 60;
+  }
+  dragon.bulletCooldown--;
+
+  // Simple dragon up/down bobbing (fly)
+  dragon.y += Math.sin(Date.now()/300) * 0.5;
+}
+
+function shootDragonFireball() {
+  dragonFireballs.push({
+    x: dragon.x,
+    y: dragon.y + dragon.height / 2,
+    width: 10,
+    height: 6,
+    speed: -8
+  });
+}
+
+function updateDragonFireballs() {
+  dragonFireballs.forEach(f => f.x += f.speed);
+  dragonFireballs = dragonFireballs.filter(f => f.x + f.width > 0);
+
+  // Check collision with hero
+  dragonFireballs = dragonFireballs.filter(f => {
+    if(f.x < hero.x + hero.width && f.x + f.width > hero.x &&
+       f.y < hero.y + hero.height && f.y + f.height > hero.y) {
+      hero.health -= 15;
+      return false;
+    }
+    return true;
+  });
+}
+
+function checkGameOver() {
+  if(hero.health <= 0) {
+    gameOver = true;
+    alert("Game Over! You lost.");
+  }
+  if(dragon.health <= 0) {
+    if(currentLevel < maxLevel) {
+      currentLevel++;
+      dragon.health = dragon.maxHealth + 50 * (currentLevel - 1);
+      hero.health = hero.maxHealth;
+      alert("Level up! Level " + currentLevel);
+    } else {
+      gameOver = true;
+      alert("Congratulations! You defeated the dragon!");
+    }
+  }
+}
+
+function gameLoop() {
+  if(gameOver) return;
+
+  drawBackground();
+  drawWalls();
+
+  updateHero();
+  checkWallClimb();
+  updateHeroBullets();
+
+  updateDragon();
+  updateDragonFireballs();
+
+  spawnLifeline();
+  updateLifelines();
+
+  // Draw hero
+  drawSprite(hero.x, hero.y, hero.scale, hero.frameIndex, heroFrames[hero.frameIndex]);
+
+  // Draw dragon
+  drawSprite(dragon.x, dragon.y + dragon.wingOffsetY, dragon.scale, dragon.frameIndex, dragonFrames[dragon.frameIndex]);
+
+  // Draw bullets
+  ctx.fillStyle = 'yellow';
+  heroBullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
+  // Draw fireballs
+  ctx.fillStyle = 'red';
+  dragonFireballs.forEach(f => ctx.fillRect(f.x, f.y, f.width, f.height));
+
+  drawLifelines();
+
+  // Health bars
+  drawHealthBar(hero.x, hero.y - 15, hero.health, hero.maxHealth, 'cyan');
+  drawHealthBar(dragon.x, dragon.y - 15, dragon.health, dragon.maxHealth, 'orange');
+
+  checkGameOver();
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Start game loop
+gameLoop();
+</script>
+
+</body></html>
