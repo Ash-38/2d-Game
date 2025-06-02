@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <!-- saved from url=(0065)file:///C:/Users/Qualtech-Ashish/Desktop/fun%20Ashish/BBBBBB.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>Dragon Warrior</title>
 <style>
@@ -463,7 +463,7 @@ gameLoop();
     const thumbX = clampedDist * Math.cos(angle);
     const thumbY = clampedDist * Math.sin(angle);
 
-    joystickThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
+    joystickThumb.style.transform = translate(${thumbX}px, ${thumbY}px);
 
     // Determine directions from joystick position
     resetTouchKeys();
