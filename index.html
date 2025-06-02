@@ -368,4 +368,130 @@ function gameLoop() {
 gameLoop();
 </script>
 
-</body></html>
+</body>
+<!-- Touch Controls -->
+<style>
+  #touchControls {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 140px;
+    height: 140px;
+    touch-action: none;
+    user-select: none;
+    z-index: 1000;
+  }
+  #joystickBase {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: rgba(200, 200, 200, 0.3);
+    border-radius: 50%;
+    border: 2px solid #aaa;
+  }
+  #joystickThumb {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: rgba(100, 100, 100, 0.7);
+    border-radius: 50%;
+    top: 40px;
+    left: 40px;
+    touch-action: none;
+  }
+  #attackButton {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 0, 0, 0.7);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 80px;
+    text-align: center;
+    user-select: none;
+    z-index: 1000;
+    touch-action: none;
+  }
+</style>
+
+<div id="touchControls">
+  <div id="joystickBase"></div>
+  <div id="joystickThumb"></div>
+</div>
+<div id="attackButton">A</div>
+
+<script>
+  const joystickBase = document.getElementById('joystickBase');
+  const joystickThumb = document.getElementById('joystickThumb');
+  const attackButton = document.getElementById('attackButton');
+
+  let joystickActive = false;
+  let startX, startY;
+
+  // Reset keys for touch input
+  function resetTouchKeys() {
+    keys['arrowup'] = false;
+    keys['arrowdown'] = false;
+    keys['arrowleft'] = false;
+    keys['arrowright'] = false;
+  }
+
+  joystickThumb.addEventListener('pointerdown', e => {
+    joystickActive = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    joystickThumb.setPointerCapture(e.pointerId);
+  });
+
+  joystickThumb.addEventListener('pointermove', e => {
+    if (!joystickActive) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    // Limit thumb movement radius
+    const maxDist = 50;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    let clampedDist = Math.min(dist, maxDist);
+    let angle = Math.atan2(dy, dx);
+
+    const thumbX = clampedDist * Math.cos(angle);
+    const thumbY = clampedDist * Math.sin(angle);
+
+    joystickThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
+
+    // Determine directions from joystick position
+    resetTouchKeys();
+    if (dy < -10) keys['arrowup'] = true;
+    if (dy > 10) keys['arrowdown'] = true;
+    if (dx < -10) keys['arrowleft'] = true;
+    if (dx > 10) keys['arrowright'] = true;
+  });
+
+  joystickThumb.addEventListener('pointerup', e => {
+    joystickActive = false;
+    joystickThumb.style.transform = 'translate(0, 0)';
+    resetTouchKeys();
+  });
+
+  joystickThumb.addEventListener('pointercancel', e => {
+    joystickActive = false;
+    joystickThumb.style.transform = 'translate(0, 0)';
+    resetTouchKeys();
+  });
+
+  // Attack button touch handlers
+  attackButton.addEventListener('pointerdown', e => {
+    keys['a'] = true;
+  });
+  attackButton.addEventListener('pointerup', e => {
+    keys['a'] = false;
+  });
+  attackButton.addEventListener('pointercancel', e => {
+    keys['a'] = false;
+  });
+</script>
+</html>
