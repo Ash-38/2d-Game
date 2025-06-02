@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
-<!-- saved from url=(0065)file:///C:/Users/Qualtech-Ashish/Desktop/fun%20Ashish/BBBBBB.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Dragon Warrior</title>
 <style>
   body {
@@ -24,79 +23,69 @@
     margin-top: 5px;
     font-weight: bold;
   }
-#startScreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(#000, #333);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-family: 'monospace';
-  z-index: 9999;
-}
-
-#startScreen h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-#startScreen button {
-  padding: 15px 30px;
-  font-size: 20px;
-  background: #228B22;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-#startScreen button:hover {
-  background: #1e6e1e;
-}
+  #startScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(#000, #333);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: monospace;
+    z-index: 9999;
+  }
+  #startScreen h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+  #startScreen button {
+    padding: 15px 30px;
+    font-size: 20px;
+    background: #228B22;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  #startScreen button:hover {
+    background: #1e6e1e;
+  }
   #gameOverScreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-family: 'monospace';
-  z-index: 9999;
-}
-
-#gameOverScreen h2 {
-  font-size: 36px;
-  margin-bottom: 20px;
-}
-
-#gameOverScreen button {
-  padding: 12px 25px;
-  font-size: 18px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-#gameOverScreen button:hover {
-  background: #b02a37;
-}
-
-  <div id="gameOverScreen" style="display: none;">
-  <h2>Game Over</h2>
-  <button onclick="restartGame()">Restart Game</button>
-</div>
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: monospace;
+    z-index: 9999;
+    display: none;
+  }
+  #gameOverScreen h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+  }
+  #gameOverScreen button {
+    padding: 12px 25px;
+    font-size: 18px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #gameOverScreen button:hover {
+    background: #b02a37;
+  }
 </style>
 </head>
 <body>
@@ -105,8 +94,16 @@
   <p>Defeat the dragon across 5 levels!</p>
   <button onclick="startGame()">Start Game</button>
 </div> 
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
 <div id="info">Use arrow keys to move. Press A to shoot. Press W to climb walls (levels 4+).</div>
+
+<div id="gameOverScreen">
+  <h2>Game Over</h2>
+  <button onclick="restartGame()">Restart Game</button>
+</div>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -280,127 +277,162 @@ function checkWallClimb() {
       if(hero.x + hero.width > wall.x &&
          hero.x < wall.x + wall.width &&
          hero.y + hero.height >= wall.y &&
+         hero.y + hero.height <= wall.y + 10 &&
          keys['w']) {
-           hero.y -= 5;
-         }
+        hero.y -= hero.speed;
+      }
     });
   }
 }
 
 function updateHero() {
-  if(keys['arrowleft']) hero.x -= hero.speed;
-  if(keys['arrowright']) hero.x += hero.speed;
-  if(keys['arrowup']) hero.y -= hero.speed;
-  if(keys['arrowdown']) hero.y += hero.speed;
+  if(keys['arrowleft'] || keys['a']) {
+    hero.x -= hero.speed;
+    if(hero.x < 0) hero.x = 0;
+  }
+  if(keys['arrowright'] || keys['d']) {
+    hero.x += hero.speed;
+    if(hero.x + hero.width > canvas.width) hero.x = canvas.width - hero.width;
+  }
+  if(keys['arrowup'] || keys['w']) {
+    // Climbing walls possible from level 4 onwards
+    if(currentLevel < 4) {
+      hero.y -= hero.speed;
+      if(hero.y < 0) hero.y = 0;
+    } else {
+      checkWallClimb();
+    }
+  }
+  if(keys['arrowdown'] || keys['s']) {
+    hero.y += hero.speed;
+    if(hero.y + hero.height > canvas.height) hero.y = canvas.height - hero.height;
+  }
 
-  // Clamp position
-  hero.x = Math.max(0, Math.min(canvas.width - hero.width, hero.x));
-  hero.y = Math.max(0, Math.min(canvas.height - hero.height, hero.y));
-
-  // Shoot bullets on A press with cooldown
+  // Shoot bullet
   if(keys['a'] && hero.bulletCooldown <= 0) {
-    shootHeroBullet();
-    hero.bulletCooldown = 20;
+    heroBullets.push({x: hero.x + hero.width, y: hero.y + hero.height / 2, width: 10, height: 4, speed: 10});
+    hero.bulletCooldown = 15;
   }
   if(hero.bulletCooldown > 0) hero.bulletCooldown--;
 
-  // Animate hero frames
+  // Animate hero sprite
   hero.frameTimer++;
-  if(hero.frameTimer > 15) {
+  if(hero.frameTimer > 10) {
     hero.frameIndex = (hero.frameIndex + 1) % heroFrames.length;
     hero.frameTimer = 0;
   }
 }
 
-function shootHeroBullet() {
-  heroBullets.push({
-    x: hero.x + hero.width,
-    y: hero.y + hero.height / 2,
-    width: 8,
-    height: 4,
-    speed: 10
-  });
-}
-
-function updateHeroBullets() {
-  heroBullets.forEach(b => b.x += b.speed);
-  // Remove offscreen bullets
-  heroBullets = heroBullets.filter(b => b.x < canvas.width);
-
-  // Check collision with dragon
-  heroBullets = heroBullets.filter(b => {
-    if(b.x + b.width > dragon.x && b.x < dragon.x + dragon.width &&
-       b.y + b.height > dragon.y && b.y < dragon.y + dragon.height) {
-      dragon.health -= 10;
-      return false;
-    }
-    return true;
-  });
-}
-
 function updateDragon() {
-  // wing flap offset
-  dragon.wingOffsetY += dragon.wingDirection * 0.3;
-  if(dragon.wingOffsetY > 3 || dragon.wingOffsetY < -3) dragon.wingDirection *= -1;
+  // Simple AI: move up and down slowly
+  dragon.y += dragon.wingDirection * 1;
+  if(dragon.y < 300 || dragon.y > 450) dragon.wingDirection *= -1;
 
+  // Animate dragon wings
   dragon.frameTimer++;
-  if(dragon.frameTimer > 20) {
+  if(dragon.frameTimer > 12) {
     dragon.frameIndex = (dragon.frameIndex + 1) % dragonFrames.length;
     dragon.frameTimer = 0;
   }
 
-  // Dragon shoots fireballs if cooldown done
+  // Dragon shoots fireballs every 90 frames
   if(dragon.bulletCooldown <= 0) {
-    shootDragonFireball();
-    dragon.bulletCooldown = 60;
+    dragonFireballs.push({x: dragon.x, y: dragon.y + dragon.height/2, width: 16, height: 8, speed: -8});
+    dragon.bulletCooldown = 90 - (currentLevel * 10); // faster at higher levels
+  } else {
+    dragon.bulletCooldown--;
   }
-  dragon.bulletCooldown--;
-
-  // Simple dragon up/down bobbing (fly)
-  dragon.y += Math.sin(Date.now()/300) * 0.5;
 }
 
-function shootDragonFireball() {
-  dragonFireballs.push({
-    x: dragon.x,
-    y: dragon.y + dragon.height / 2,
-    width: 10,
-    height: 6,
-    speed: -8
-  });
-}
+function updateBullets() {
+  // Hero bullets move right
+  heroBullets.forEach(b => b.x += b.speed);
+  heroBullets = heroBullets.filter(b => b.x < canvas.width);
 
-function updateDragonFireballs() {
+  // Dragon fireballs move left
   dragonFireballs.forEach(f => f.x += f.speed);
   dragonFireballs = dragonFireballs.filter(f => f.x + f.width > 0);
+}
 
-  // Check collision with hero
-  dragonFireballs = dragonFireballs.filter(f => {
-    if(f.x < hero.x + hero.width && f.x + f.width > hero.x &&
-       f.y < hero.y + hero.height && f.y + f.height > hero.y) {
-      hero.health -= 15;
-      return false;
+function checkCollisions() {
+  // Hero bullets hit dragon
+  heroBullets.forEach((b,i) => {
+    if(b.x < dragon.x + dragon.width &&
+       b.x + b.width > dragon.x &&
+       b.y < dragon.y + dragon.height &&
+       b.y + b.height > dragon.y) {
+      dragon.health -= 15;
+      heroBullets.splice(i, 1);
+      if(dragon.health <= 0) {
+        currentLevel++;
+        if(currentLevel > maxLevel) {
+          endGame(true);
+        } else {
+          nextLevel();
+        }
+      }
     }
-    return true;
+  });
+
+  // Dragon fireballs hit hero
+  dragonFireballs.forEach((f,i) => {
+    if(f.x < hero.x + hero.width &&
+       f.x + f.width > hero.x &&
+       f.y < hero.y + hero.height &&
+       f.y + f.height > hero.y) {
+      hero.health -= 10;
+      dragonFireballs.splice(i, 1);
+      if(hero.health <= 0) {
+        endGame(false);
+      }
+    }
   });
 }
 
-function checkGameOver() {
-  if (hero.health <= 0) {
-  showGameOverScreen();
-  return; // stop the loop
+function nextLevel() {
+  // Reset positions and health
+  hero.x = 100; hero.y = 500; hero.health = 100;
+  dragon.x = 600; dragon.y = 400; dragon.health = 200 + (currentLevel - 1) * 50;
+  heroBullets = [];
+  dragonFireballs = [];
+  lifelinePlants = [];
 }
-  if(dragon.health <= 0) {
-    if(currentLevel < maxLevel) {
-      currentLevel++;
-      dragon.health = dragon.maxHealth + 50 * (currentLevel - 1);
-      hero.health = hero.maxHealth;
-      alert("Level up! Level " + currentLevel);
-    } else {
-      gameOver = true;
-      alert("Congratulations! You defeated the dragon!");
-    }
-  }
+
+function endGame(won) {
+  gameOver = true;
+  document.getElementById('gameOverScreen').style.display = 'flex';
+  document.getElementById('gameOverScreen').querySelector('h2').textContent = won ? 'You Win! Congratulations!' : 'Game Over - You Lost!';
+}
+
+function restartGame() {
+  currentLevel = 1;
+  nextLevel();
+  gameOver = false;
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+}
+
+function drawHero() {
+  drawSprite(hero.x, hero.y, hero.scale, hero.frameIndex, heroFrames[hero.frameIndex]);
+}
+
+function drawDragon() {
+  drawSprite(dragon.x, dragon.y, dragon.scale, dragon.frameIndex, dragonFrames[dragon.frameIndex]);
+}
+
+function drawBullets() {
+  ctx.fillStyle = 'yellow';
+  heroBullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+  ctx.fillStyle = 'orange';
+  dragonFireballs.forEach(f => ctx.fillRect(f.x, f.y, f.width, f.height));
+}
+
+function drawInfo() {
+  ctx.fillStyle = 'white';
+  ctx.font = '16px monospace';
+  ctx.fillText(`Level: ${currentLevel}`, 10, 20);
+  ctx.fillText(`Hero HP: ${hero.health}`, 10, 40);
+  ctx.fillText(`Dragon HP: ${dragon.health}`, canvas.width - 150, 20);
 }
 
 function gameLoop() {
@@ -408,210 +440,31 @@ function gameLoop() {
 
   drawBackground();
   drawWalls();
-
-  updateHero();
-  checkWallClimb();
-  updateHeroBullets();
-
-  updateDragon();
-  updateDragonFireballs();
-
   spawnLifeline();
   updateLifelines();
-
-  // Draw hero
-  drawSprite(hero.x, hero.y, hero.scale, hero.frameIndex, heroFrames[hero.frameIndex]);
-
-  // Draw dragon
-  drawSprite(dragon.x, dragon.y + dragon.wingOffsetY, dragon.scale, dragon.frameIndex, dragonFrames[dragon.frameIndex]);
-
-  // Draw bullets
-  ctx.fillStyle = 'yellow';
-  heroBullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
-
-  // Draw fireballs
-  ctx.fillStyle = 'red';
-  dragonFireballs.forEach(f => ctx.fillRect(f.x, f.y, f.width, f.height));
-
   drawLifelines();
 
-  // Health bars
-  drawHealthBar(hero.x, hero.y - 15, hero.health, hero.maxHealth, 'cyan');
-  drawHealthBar(dragon.x, dragon.y - 15, dragon.health, dragon.maxHealth, 'orange');
+  updateHero();
+  updateDragon();
+  updateBullets();
+  checkCollisions();
 
-  checkGameOver();
+  drawHero();
+  drawDragon();
+  drawBullets();
+  drawHealthBar(10, 45, hero.health, hero.maxHealth, 'lime');
+  drawHealthBar(canvas.width - 150, 45, dragon.health, dragon.maxHealth, 'red');
+  drawInfo();
 
   requestAnimationFrame(gameLoop);
 }
 
-  function showGameOverScreen() {
-  document.getElementById('gameOverScreen').style.display = 'flex';
-}
-
-// Start game loop
 function startGame() {
   document.getElementById('startScreen').style.display = 'none';
-  gameLoop();
-}
-  function restartGame() {
-  // Reset game state
-  hero.health = 100;
-  hero.x = 100;
-  hero.y = canvas.height - 100;
-  currentLevel = 1;
-  // Any other resets needed...
-
-  // Hide Game Over screen
-  document.getElementById('gameOverScreen').style.display = 'none';
-
-  // Restart game loop
+  nextLevel();
+  gameOver = false;
   gameLoop();
 }
 </script>
-
 </body>
-<!-- Touch Controls -->
-<style>
-  #touchControls {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 140px;
-    height: 140px;
-    touch-action: none;
-    user-select: none;
-    z-index: 1000;
-  }
-  #joystickBase {
-    position: absolute;
-    width: 140px;
-    height: 140px;
-    background: rgba(200, 200, 200, 0.3);
-    border-radius: 50%;
-    border: 2px solid #aaa;
-  }
-  #joystickThumb {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: rgba(100, 100, 100, 0.7);
-    border-radius: 50%;
-    top: 40px;
-    left: 40px;
-    touch-action: none;
-  }
-  #attackButton {
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 0, 0, 0.7);
-    border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    font-size: 24px;
-    line-height: 80px;
-    text-align: center;
-    user-select: none;
-    z-index: 1000;
-    touch-action: none;
-  }
-</style>
-
-<div id="touchControls">
-  <div id="joystickBase"></div>
-  <div id="joystickThumb"></div>
-</div>
-<div id="attackButton">A</div>
-
-<script>
-  const joystickBase = document.getElementById('joystickBase');
-  const joystickThumb = document.getElementById('joystickThumb');
-  const attackButton = document.getElementById('attackButton');
-
-  let joystickActive = false;
-  let startX, startY;
-
-  // Reset keys for touch input
-  function resetTouchKeys() {
-    keys['arrowup'] = false;
-    keys['arrowdown'] = false;
-    keys['arrowleft'] = false;
-    keys['arrowright'] = false;
-  }
-
-  joystickThumb.addEventListener('pointerdown', e => {
-    joystickActive = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    joystickThumb.setPointerCapture(e.pointerId);
-  });
-
-  joystickThumb.addEventListener('pointermove', e => {
-    if (!joystickActive) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    // Limit thumb movement radius
-    const maxDist = 50;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-    let clampedDist = Math.min(dist, maxDist);
-    let angle = Math.atan2(dy, dx);
-
-    const thumbX = clampedDist * Math.cos(angle);
-    const thumbY = clampedDist * Math.sin(angle);
-
-    joystickThumb.style.transform = translate(${thumbX}px, ${thumbY}px);
-
-    // Determine directions from joystick position
-    resetTouchKeys();
-    if (dy < -10) keys['arrowup'] = true;
-    if (dy > 10) keys['arrowdown'] = true;
-    if (dx < -10) keys['arrowleft'] = true;
-    if (dx > 10) keys['arrowright'] = true;
-  });
-
-  joystickThumb.addEventListener('pointerup', e => {
-    joystickActive = false;
-    joystickThumb.style.transform = 'translate(0, 0)';
-    resetTouchKeys();
-  });
-
-  joystickThumb.addEventListener('pointercancel', e => {
-    joystickActive = false;
-    joystickThumb.style.transform = 'translate(0, 0)';
-    resetTouchKeys();
-  });
-
-  // Attack button touch handlers
-  attackButton.addEventListener('pointerdown', e => {
-    keys['a'] = true;
-  });
-  attackButton.addEventListener('pointerup', e => {
-    keys['a'] = false;
-  });
-  attackButton.addEventListener('pointercancel', e => {
-    keys['a'] = false;
-  });
-</script>
-  <canvas id="gameCanvas"></canvas>
-
-<script>
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  // Resize on load
-  window.addEventListener('load', resizeCanvas);
-  // Resize on orientation change or screen size change
-  window.addEventListener('resize', resizeCanvas);
-
-  // Your game logic here
-</script>
-
 </html>
