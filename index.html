@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- saved from url=(0065)file:///C:/Users/Qualtech-Ashish/Desktop/fun%20Ashish/BBBBBB.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <title>Dragon Warrior</title>
 <style>
@@ -494,4 +495,23 @@ gameLoop();
     keys['a'] = false;
   });
 </script>
+  <canvas id="gameCanvas"></canvas>
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  // Resize on load
+  window.addEventListener('load', resizeCanvas);
+  // Resize on orientation change or screen size change
+  window.addEventListener('resize', resizeCanvas);
+
+  // Your game logic here
+</script>
+
 </html>
