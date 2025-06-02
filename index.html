@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <!-- saved from url=(0065)file:///C:/Users/Qualtech-Ashish/Desktop/fun%20Ashish/BBBBBB.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <title>Dragon Warrior</title>
 <style>
@@ -31,7 +32,7 @@
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-  let gameState = 'start'; 
+
 const castleColors = ['#8B7D7B', '#6B8E23', '#8B4513', '#2F4F4F', '#483D8B'];
 const maxLevel = 5;
 let currentLevel = 1;
@@ -40,28 +41,6 @@ let gameOver = false;
 const keys = {};
 document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-  function drawStartScreen() {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.font = '36px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('DRAGON WARRIOR', canvas.width / 2, canvas.height / 2 - 40);
-      ctx.font = '20px monospace';
-      ctx.fillText('Press ENTER to Start', canvas.width / 2, canvas.height / 2 + 20);
-    }
-
-    function drawGameOverScreen() {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.font = '36px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
-      ctx.font = '20px monospace';
-      ctx.fillText('Press ENTER to Restart', canvas.width / 2, canvas.height / 2 + 20);
-    }
 
 // --- SPRITES (simple pixel art) ---
 
@@ -346,12 +325,8 @@ function checkGameOver() {
   }
 }
 
-  function gameLoop() {
-      if (gameState === 'start') {
-        drawStartScreen();
-      } else if (gameState === 'gameover') {
-        drawGameOverScreen();
-      } else if (gameState === 'playing') {
+function gameLoop() {
+  if(gameOver) return;
 
   drawBackground();
   drawWalls();
@@ -473,22 +448,7 @@ gameLoop();
     startY = e.clientY;
     joystickThumb.setPointerCapture(e.pointerId);
   });
- function restartGame() {
-      // Reset positions and states of hero, dragon, bullets, etc.
-      hero.x = 100;
-      hero.y = 500;
-      hero.health = hero.maxHealth;
-      dragon.x = 600;
-      dragon.y = 400;
-      dragon.health = dragon.maxHealth;
-      heroBullets = [];
-      dragonFireballs = [];
-      lifelinePlants = [];
-      currentLevel = 1;
-      gameOver = false;
-      // Reset any other variables as needed
-    }
-  
+
   joystickThumb.addEventListener('pointermove', e => {
     if (!joystickActive) return;
     const dx = e.clientX - startX;
